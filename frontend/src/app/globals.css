@@ -1086,6 +1086,39 @@ h1, h2, h3, h4 {
   font-weight: 600;
 }
 
+.project-card-wrapper {
+  position: relative;
+}
+
+.project-card-delete {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  color: var(--gray);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: opacity var(--transition), color var(--transition);
+}
+
+.project-card-wrapper:hover .project-card-delete {
+  opacity: 1;
+}
+
+.project-card-delete:hover {
+  color: #ff4d4f;
+  transform: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
 .project-card-form {
   padding: 1.25rem;
   align-items: stretch !important;

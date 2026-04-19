@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
 import { Project } from '@/types/kanban';
 import {
   getUsers, saveUsers, getProjects, saveProjects,
@@ -17,7 +16,6 @@ export default function Home() {
   const [confirmInput, setConfirmInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
 
@@ -87,7 +85,6 @@ export default function Home() {
     setProjects([]);
     setAuthMode('login');
     setAuthError('');
-    setSidebarOpen(false);
   };
 
   const addProject = (name: string) => {
@@ -187,32 +184,26 @@ export default function Home() {
 
   // ── Projects overview ──────────────────────────────────────────────────────
   return (
-    <div className={`app-layout${sidebarOpen ? ' sidebar-open' : ''}`}>
-      <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
-      <Sidebar
-        userName={currentUser}
-        projects={projects}
-        selectedProjectId={null}
-        onAddProject={addProject}
-        onDeleteProject={deleteProject}
-        onLogout={handleLogout}
-      />
-      <div className="app-main">
-        <header className="app-header">
-          <button className="hamburger-btn" onClick={() => setSidebarOpen(o => !o)} aria-label="Toggle sidebar">
-            ☰
-          </button>
-          <h1 className="app-title">My Projects</h1>
-        </header>
+    <div className="board-page-layout">
+      <header className="board-page-header">
+        <span className="brand-icon" style={{ fontSize: '1.3rem', color: 'var(--blue)' }}>⊞</span>
+        <span className="header-sep" />
+        <h1 className="board-page-title">My Projects</h1>
+        <div className="header-user">
+          <span className="header-user-avatar">{currentUser[0].toUpperCase()}</span>
+          <span className="header-user-name">{currentUser}</span>
+          <button className="header-logout-btn" onClick={handleLogout}>Log out</button>
+        </div>
+      </header>
 
-        <div className="projects-page">
-          <div className="projects-grid">
-            {projects.map(project => {
-              const colCount = getColumns(currentUser, project.id as string).length;
-              const cardCount = getCards(currentUser, project.id as string).length;
-              return (
+      <div className="projects-page">
+        <div className="projects-grid">
+          {projects.map(project => {
+            const colCount = getColumns(currentUser, project.id as string).length;
+            const cardCount = getCards(currentUser, project.id as string).length;
+            return (
+              <div key={project.id as string} className="project-card-wrapper">
                 <a
-                  key={project.id as string}
                   href={`/board?projectId=${project.id}`}
                   className="project-card"
                 >
@@ -227,8 +218,16 @@ export default function Home() {
                     <span className="project-card-open">Open Board →</span>
                   </div>
                 </a>
-              );
-            })}
+                {projects.length > 1 && (
+                  <button
+                    className="project-card-delete"
+                    onClick={() => deleteProject(project.id as string)}
+                    title="Delete project"
+                  >×</button>
+                )}
+              </div>
+            );
+          })}
 
             {isAddingProject ? (
               <form
@@ -267,6 +266,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
+
