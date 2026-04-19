@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: kanban
+    runtime: static
+    buildCommand: cd frontend && npm install -g pnpm && pnpm install && pnpm run build
+    staticPublishPath: ./frontend/out
+    pullRequestPreviewsEnabled: false
