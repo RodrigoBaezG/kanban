@@ -31,11 +31,10 @@ export default function BoardPage() {
   return (
     <div className="board-page-layout">
       <header className="board-page-header">
-        <a href="/" className="back-btn" title="All Projects">← Projects</a>
-        <h1 className="app-title">
-          <span className="project-dot-lg" style={{ background: selectedProject.color }} />
-          {selectedProject.name}
-        </h1>
+        <a href="/" className="back-btn">← Projects</a>
+        <span className="header-sep" />
+        <span className="project-dot-lg" style={{ background: selectedProject.color }} />
+        <h1 className="board-page-title">{selectedProject.name}</h1>
       </header>
       <Board
         key={projectId}
