@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Kanban Project
 
 ## Business Requirements
