@@ -12,9 +12,10 @@ interface Props {
   deleteCard: (id: string | number) => void;
   updateColumnTitle: (id: string | number, title: string) => void;
   openAddCardModal: (columnId: string | number) => void;
+  deleteColumn: (id: string | number) => void;
 }
 
-export default function Column({ column, cards, deleteCard, updateColumnTitle, openAddCardModal }: Props) {
+export default function Column({ column, cards, deleteCard, updateColumnTitle, openAddCardModal, deleteColumn }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(column.title);
 
@@ -27,10 +28,7 @@ export default function Column({ column, cards, deleteCard, updateColumnTitle, o
     isDragging,
   } = useSortable({
     id: column.id,
-    data: {
-      type: 'Column',
-      column,
-    },
+    data: { type: 'Column', column },
   });
 
   const style = {
@@ -59,22 +57,30 @@ export default function Column({ column, cards, deleteCard, updateColumnTitle, o
             autoFocus
             className="column-title-input"
             value={titleValue}
-            onChange={(e) => setTitleValue(e.target.value)}
+            onChange={e => setTitleValue(e.target.value)}
             onBlur={handleTitleSubmit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleTitleSubmit();
-            }}
+            onKeyDown={e => { if (e.key === 'Enter') handleTitleSubmit(); }}
           />
         ) : (
-          <h3 className="column-title" onClick={() => setIsEditing(true)}>
-            {column.title}
-          </h3>
+          <div className="column-header-row">
+            <h3 className="column-title" onClick={() => setIsEditing(true)}>
+              {column.title}
+            </h3>
+            <span className="column-count">{cards.length}</span>
+            <button
+              className="delete-column-btn"
+              onClick={e => { e.stopPropagation(); deleteColumn(column.id); }}
+              title="Delete column"
+            >
+              ×
+            </button>
+          </div>
         )}
       </div>
 
       <div className="column-body">
-        <SortableContext items={cards.map((c) => c.id)}>
-          {cards.map((card) => (
+        <SortableContext items={cards.map(c => c.id)}>
+          {cards.map(card => (
             <Card key={card.id} card={card} deleteCard={deleteCard} />
           ))}
         </SortableContext>

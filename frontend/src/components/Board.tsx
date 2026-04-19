@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -18,52 +18,73 @@ import { Column as ColumnType, CardItem, Id } from '@/types/kanban';
 import Column from './Column';
 import Card from './Card';
 
-const initialColumns: ColumnType[] = [
-  { id: 'todo', title: 'To Do' },
-  { id: 'in_progress', title: 'In Progress' },
-  { id: 'review', title: 'Review' },
-  { id: 'testing', title: 'Testing' },
-  { id: 'done', title: 'Done' },
-];
+const DEFAULT_COLUMNS = ['To Do', 'In Progress', 'Review', 'Done'];
 
-const initialCards: CardItem[] = [
-  { id: '1', columnId: 'todo', title: 'Database Migration', details: 'Migrate users to new schema.' },
-  { id: '2', columnId: 'todo', title: 'Setup CI/CD', details: 'Configure GitHub Actions for deployment.' },
-  { id: '3', columnId: 'in_progress', title: 'Kanban Board components', details: 'Create Board, Column, Card UI.' },
-  { id: '4', columnId: 'done', title: 'Project Scaffolding', details: 'Initialize Next.js project and setup tests.' },
-];
+interface Props {
+  projectId: string;
+  userName: string;
+}
 
-export default function Board() {
-  const [columns, setColumns] = useState<ColumnType[]>(initialColumns);
-  const columnsId = useMemo(() => columns.map((col) => col.id), [columns]);
+export default function Board({ projectId, userName }: Props) {
+  const columnsKey = `kanban_cols_${userName}_${projectId}`;
+  const cardsKey = `kanban_cards_${userName}_${projectId}`;
 
-  const [cards, setCards] = useState<CardItem[]>(initialCards);
-  
+  const [columns, setColumns] = useState<ColumnType[]>([]);
+  const [cards, setCards] = useState<CardItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
   const [activeColumn, setActiveColumn] = useState<ColumnType | null>(null);
   const [activeCard, setActiveCard] = useState<CardItem | null>(null);
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetColumnId, setTargetColumnId] = useState<Id | null>(null);
 
+  const columnsId = useMemo(() => columns.map(col => col.id), [columns]);
+
+  useEffect(() => {
+    const storedCols = localStorage.getItem(columnsKey);
+    const storedCards = localStorage.getItem(cardsKey);
+
+    if (storedCols) {
+      setColumns(JSON.parse(storedCols));
+    } else {
+      const defaults = DEFAULT_COLUMNS.map((title, i) => ({
+        id: `${projectId}_col_${i}`,
+        title,
+      }));
+      setColumns(defaults);
+    }
+
+    setCards(storedCards ? JSON.parse(storedCards) : []);
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem(columnsKey, JSON.stringify(columns));
+  }, [columns, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem(cardsKey, JSON.stringify(cards));
+  }, [cards, loaded]);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const deleteCard = (id: Id) => {
-    setCards((cards) => cards.filter((card) => card.id !== id));
+  const deleteCard = (id: Id) => setCards(prev => prev.filter(c => c.id !== id));
+
+  const updateColumnTitle = (id: Id, title: string) =>
+    setColumns(prev => prev.map(col => col.id === id ? { ...col, title } : col));
+
+  const addColumn = () => {
+    setColumns(prev => [...prev, { id: `col_${Date.now()}`, title: 'New Column' }]);
   };
 
-  const updateColumnTitle = (id: Id, title: string) => {
-    setColumns((columns) =>
-      columns.map((col) => (col.id === id ? { ...col, title } : col))
-    );
+  const deleteColumn = (id: Id) => {
+    setColumns(prev => prev.filter(col => col.id !== id));
+    setCards(prev => prev.filter(card => card.columnId !== id));
   };
 
   const openAddCardModal = (columnId: Id) => {
@@ -76,17 +97,13 @@ export default function Board() {
     const formData = new FormData(e.currentTarget);
     const title = formData.get('title') as string;
     const details = formData.get('details') as string;
-
     if (!title.trim() || !targetColumnId) return;
-
-    const newCard: CardItem = {
+    setCards(prev => [...prev, {
       id: Date.now().toString(),
       columnId: targetColumnId,
       title,
       details,
-    };
-
-    setCards([...cards, newCard]);
+    }]);
     setIsModalOpen(false);
     setTargetColumnId(null);
   };
@@ -94,47 +111,35 @@ export default function Board() {
   function onDragStart(event: DragStartEvent) {
     if (event.active.data.current?.type === 'Column') {
       setActiveColumn(event.active.data.current.column);
-      return;
-    }
-
-    if (event.active.data.current?.type === 'Card') {
+    } else if (event.active.data.current?.type === 'Card') {
       setActiveCard(event.active.data.current.card);
-      return;
     }
   }
 
   function onDragOver(event: DragOverEvent) {
     const { active, over } = event;
     if (!over) return;
-
     const activeId = active.id;
     const overId = over.id;
-
     if (activeId === overId) return;
-
     const isActiveACard = active.data.current?.type === 'Card';
     const isOverACard = over.data.current?.type === 'Card';
     const isOverAColumn = over.data.current?.type === 'Column';
-
     if (!isActiveACard) return;
-
     if (isActiveACard && isOverACard) {
-      setCards((cards) => {
-        const activeIndex = cards.findIndex((t) => t.id === activeId);
-        const overIndex = cards.findIndex((t) => t.id === overId);
-
+      setCards(cards => {
+        const activeIndex = cards.findIndex(t => t.id === activeId);
+        const overIndex = cards.findIndex(t => t.id === overId);
         if (cards[activeIndex].columnId !== cards[overIndex].columnId) {
           cards[activeIndex].columnId = cards[overIndex].columnId;
           return arrayMove(cards, activeIndex, overIndex - 1);
         }
-
         return arrayMove(cards, activeIndex, overIndex);
       });
     }
-
     if (isActiveACard && isOverAColumn) {
-      setCards((cards) => {
-        const activeIndex = cards.findIndex((t) => t.id === activeId);
+      setCards(cards => {
+        const activeIndex = cards.findIndex(t => t.id === activeId);
         cards[activeIndex].columnId = overId;
         return arrayMove(cards, activeIndex, activeIndex);
       });
@@ -144,24 +149,21 @@ export default function Board() {
   function onDragEnd(event: DragEndEvent) {
     setActiveColumn(null);
     setActiveCard(null);
-
     const { active, over } = event;
     if (!over) return;
-
     const activeId = active.id;
     const overId = over.id;
-
     if (activeId === overId) return;
-
-    const isActiveAColumn = active.data.current?.type === 'Column';
-    if (isActiveAColumn) {
-      setColumns((columns) => {
-        const activeColumnIndex = columns.findIndex((col) => col.id === activeId);
-        const overColumnIndex = columns.findIndex((col) => col.id === overId);
-        return arrayMove(columns, activeColumnIndex, overColumnIndex);
+    if (active.data.current?.type === 'Column') {
+      setColumns(cols => {
+        const activeIndex = cols.findIndex(col => col.id === activeId);
+        const overIndex = cols.findIndex(col => col.id === overId);
+        return arrayMove(cols, activeIndex, overIndex);
       });
     }
   }
+
+  if (!loaded) return null;
 
   return (
     <>
@@ -175,26 +177,29 @@ export default function Board() {
         >
           <div className="board">
             <SortableContext items={columnsId}>
-              {columns.map((col) => (
+              {columns.map(col => (
                 <Column
                   key={col.id}
                   column={col}
-                  cards={cards.filter((card) => card.columnId === col.id)}
+                  cards={cards.filter(card => card.columnId === col.id)}
                   deleteCard={deleteCard}
                   updateColumnTitle={updateColumnTitle}
                   openAddCardModal={openAddCardModal}
+                  deleteColumn={deleteColumn}
                 />
               ))}
             </SortableContext>
+            <button className="add-column-btn" onClick={addColumn}>+ Add Column</button>
           </div>
           <DragOverlay>
             {activeColumn && (
               <Column
                 column={activeColumn}
-                cards={cards.filter((card) => card.columnId === activeColumn.id)}
+                cards={cards.filter(card => card.columnId === activeColumn.id)}
                 deleteCard={deleteCard}
                 updateColumnTitle={updateColumnTitle}
                 openAddCardModal={openAddCardModal}
+                deleteColumn={deleteColumn}
               />
             )}
             {activeCard && <Card card={activeCard} deleteCard={deleteCard} />}
