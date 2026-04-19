@@ -32,9 +32,16 @@ export function getCards(user: string, projectId: string): CardItem[] {
   return stored ? JSON.parse(stored) : [];
 }
 
+const DEMO_SEED_VERSION = '2';
+
 export function seedDemoData() {
-  const key = `kanban_projects_${DEMO_USER}`;
-  if (localStorage.getItem(key)) return;
+  const versionKey = `kanban_demo_version`;
+  if (localStorage.getItem(versionKey) === DEMO_SEED_VERSION) return;
+
+  // Clear any old demo data before re-seeding
+  localStorage.removeItem(`kanban_projects_${DEMO_USER}`);
+  localStorage.removeItem(`kanban_cols_${DEMO_USER}_${DEMO_PROJECT_ID}`);
+  localStorage.removeItem(`kanban_cards_${DEMO_USER}_${DEMO_PROJECT_ID}`);
 
   saveProjects(DEMO_USER, [
     { id: DEMO_PROJECT_ID, name: 'My Project', color: '#209dd7' },
@@ -52,4 +59,6 @@ export function seedDemoData() {
     { id: 'd3', columnId: 'demo_col_1', title: 'Kanban Board components', details: 'Create Board, Column, Card UI.' },
     { id: 'd4', columnId: 'demo_col_4', title: 'Project Scaffolding', details: 'Initialize Next.js project and setup tests.' },
   ]));
+
+  localStorage.setItem(versionKey, DEMO_SEED_VERSION);
 }
