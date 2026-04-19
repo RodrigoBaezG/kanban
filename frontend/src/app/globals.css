@@ -7,7 +7,8 @@
   --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
   --surface-color: rgba(255, 255, 255, 0.7);
   --border-radius: 12px;
-  --transition-speed: 0.2s;
+  --transition: 0.2s ease;
+  --sidebar-width: 240px;
 }
 
 * {
@@ -23,7 +24,7 @@ body {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg-gradient);
   color: var(--navy);
 }
@@ -36,12 +37,13 @@ button {
   padding: 0.5rem 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-speed) ease;
+  transition: all var(--transition);
   font-family: inherit;
+  font-size: 0.9rem;
 }
 
 button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(32, 157, 215, 0.3);
 }
 
@@ -62,7 +64,140 @@ h1, h2, h3, h4 {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+/* ── Auth ────────────────────────────────────── */
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem 2rem;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.auth-logo {
+  font-size: 2.5rem;
+  color: var(--blue);
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.auth-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 1.75rem;
+}
+
+.auth-tabs {
+  display: flex;
+  background: rgba(3, 33, 71, 0.06);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
+  gap: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  color: var(--gray);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem;
+  border-radius: 6px;
+  box-shadow: none;
+  transition: all var(--transition);
+}
+
+.auth-tab:hover {
+  color: var(--navy);
+  background: rgba(255, 255, 255, 0.5);
+  transform: none;
+  box-shadow: none;
+}
+
+.auth-tab.active {
+  background: white;
+  color: var(--navy);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-tab.active:hover {
+  transform: none;
+}
+
+.auth-form {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.auth-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+}
+
+.auth-error {
+  color: #e74c3c;
+  font-size: 0.82rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(231, 76, 60, 0.08);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.demo-btn {
+  width: 100%;
+  background: rgba(3, 33, 71, 0.06);
+  color: var(--navy);
+  font-size: 0.9rem;
+  padding: 0.65rem;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.demo-btn:hover {
+  background: rgba(3, 33, 71, 0.1);
+  transform: none;
+  box-shadow: none;
 }
 
 /* ── App Layout ──────────────────────────────── */
@@ -71,6 +206,15 @@ h1, h2, h3, h4 {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  position: relative;
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
 }
 
 .app-main {
@@ -82,25 +226,49 @@ h1, h2, h3, h4 {
 }
 
 .app-header {
-  padding: 0.875rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   flex-shrink: 0;
+  min-height: 52px;
+}
+
+.hamburger-btn {
+  background: transparent;
+  color: var(--navy);
+  padding: 0.3rem 0.5rem;
+  font-size: 1.1rem;
+  box-shadow: none;
+  border-radius: 6px;
+  display: none; /* hidden on desktop */
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background: rgba(3, 33, 71, 0.08);
+  transform: none;
+  box-shadow: none;
 }
 
 .app-title {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.3rem;
+  gap: 0.6rem;
+  font-size: 1.2rem;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-dot-lg {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -111,27 +279,31 @@ h1, h2, h3, h4 {
   justify-content: center;
   flex: 1;
   color: var(--gray);
-  font-size: 1.1rem;
+  font-size: 1rem;
+  padding: 2rem;
+  text-align: center;
 }
 
 /* ── Sidebar ─────────────────────────────────── */
 
 .sidebar {
-  width: 240px;
-  min-width: 240px;
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
   background: var(--navy);
   color: white;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  flex-shrink: 0;
+  z-index: 100;
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1.25rem 1rem;
+  padding: 1.1rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   font-weight: 700;
   font-size: 1rem;
@@ -140,7 +312,7 @@ h1, h2, h3, h4 {
 }
 
 .brand-icon {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: var(--blue);
 }
 
@@ -183,8 +355,8 @@ h1, h2, h3, h4 {
   padding: 0.2rem 0.4rem;
   font-size: 1rem;
   border-radius: 6px;
-  min-width: unset;
   box-shadow: none;
+  flex-shrink: 0;
 }
 
 .logout-btn:hover {
@@ -195,8 +367,8 @@ h1, h2, h3, h4 {
 }
 
 .sidebar-label {
-  padding: 1rem 1rem 0.4rem;
-  font-size: 0.7rem;
+  padding: 0.875rem 1rem 0.35rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -339,101 +511,44 @@ h1, h2, h3, h4 {
 
 .sidebar-btn:hover {
   transform: none;
+  box-shadow: none;
 }
 
-/* ── Login ───────────────────────────────────── */
-
-.login-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-gradient);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-card {
-  padding: 3rem;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-}
-
-.login-logo {
-  font-size: 3rem;
-  color: var(--blue);
-  margin-bottom: 0.75rem;
-}
-
-.login-title {
-  font-size: 1.75rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-}
-
-.login-subtitle {
-  color: var(--gray);
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.login-form input {
-  padding: 0.75rem 1rem;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 1rem;
-  text-align: center;
-  transition: border-color 0.2s;
-}
-
-.login-form input:focus {
-  outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(32, 157, 215, 0.1);
-}
-
-/* ── Kanban Board Layout ─────────────────────── */
+/* ── Kanban Board ────────────────────────────── */
 
 .board-container {
   flex: 1;
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1.25rem 1rem;
   align-items: flex-start;
 }
 
 .board {
   display: flex;
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: flex-start;
-  height: 100%;
-  padding-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  min-height: 100%;
 }
 
 .add-column-btn {
   flex-shrink: 0;
   width: 240px;
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--navy);
-  border: 2px dashed rgba(3, 33, 71, 0.15);
+  background: rgba(255, 255, 255, 0.45);
+  color: rgba(3, 33, 71, 0.5);
+  border: 2px dashed rgba(3, 33, 71, 0.12);
   box-shadow: none;
   font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.75rem;
+  font-size: 0.875rem;
+  padding: 0.7rem;
   align-self: flex-start;
+  border-radius: var(--border-radius);
 }
 
 .add-column-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.75);
   border-color: var(--blue);
   color: var(--blue);
   transform: none;
@@ -449,16 +564,16 @@ h1, h2, h3, h4 {
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-top: 4px solid var(--blue);
   border-radius: var(--border-radius);
-  width: 280px;
-  min-width: 280px;
+  width: 270px;
+  min-width: 270px;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 130px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  max-height: calc(100vh - 120px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .column-header {
-  padding: 0.875rem 1rem;
+  padding: 0.8rem 0.875rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   cursor: grab;
   flex-shrink: 0;
@@ -475,19 +590,20 @@ h1, h2, h3, h4 {
 }
 
 .column-title {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--navy);
   flex: 1;
+  line-height: 1.3;
 }
 
 .column-count {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  background: rgba(3, 33, 71, 0.08);
+  background: rgba(3, 33, 71, 0.07);
   color: var(--navy);
   border-radius: 999px;
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem 0.45rem;
   flex-shrink: 0;
 }
 
@@ -495,12 +611,12 @@ h1, h2, h3, h4 {
   background: transparent;
   color: var(--gray);
   padding: 0;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem;
   opacity: 0;
   transition: opacity 0.15s;
   border-radius: 4px;
@@ -521,8 +637,8 @@ h1, h2, h3, h4 {
 
 .column-title-input {
   width: 100%;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.95rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.9rem;
   font-weight: 700;
   border: 2px solid var(--blue);
   border-radius: 4px;
@@ -532,11 +648,11 @@ h1, h2, h3, h4 {
 }
 
 .column-body {
-  padding: 0.75rem;
+  padding: 0.625rem;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
   overflow-y: auto;
   min-height: 60px;
 }
@@ -546,8 +662,8 @@ h1, h2, h3, h4 {
   background: var(--surface-color);
   border: 2px dashed var(--blue);
   border-radius: var(--border-radius);
-  width: 280px;
-  min-height: 100px;
+  width: 270px;
+  min-height: 80px;
 }
 
 /* ── Card ────────────────────────────────────── */
@@ -555,11 +671,11 @@ h1, h2, h3, h4 {
 .kanban-card {
   background: white;
   border-radius: 8px;
-  padding: 0.875rem;
+  padding: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   cursor: grab;
   border-left: 3px solid var(--yellow);
-  transition: box-shadow var(--transition-speed), transform var(--transition-speed);
+  transition: box-shadow var(--transition), transform var(--transition);
   position: relative;
 }
 
@@ -576,37 +692,37 @@ h1, h2, h3, h4 {
   opacity: 0.35;
   background: white;
   border-radius: 8px;
-  height: 60px;
+  height: 56px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 .card-title {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   margin: 0;
-  padding-right: 1.5rem;
+  padding-right: 1.25rem;
   line-height: 1.4;
 }
 
 .delete-card-btn {
   position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0.4rem;
+  right: 0.4rem;
   background: transparent;
   color: var(--gray);
   padding: 0;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1rem;
   line-height: 1;
   opacity: 0;
   transition: opacity 0.15s, color 0.15s;
@@ -626,7 +742,7 @@ h1, h2, h3, h4 {
 }
 
 .card-details {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--gray);
   line-height: 1.4;
 }
@@ -634,20 +750,20 @@ h1, h2, h3, h4 {
 /* ── Add Card Button ─────────────────────────── */
 
 .add-card-btn {
-  margin: 0.5rem 0.75rem 0.75rem;
+  margin: 0.4rem 0.625rem 0.625rem;
   background: transparent;
   color: var(--gray);
   box-shadow: none;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 0.4rem 0.5rem;
+  padding: 0.35rem 0.5rem;
   text-align: left;
   border-radius: 6px;
   flex-shrink: 0;
 }
 
 .add-card-btn:hover {
-  background: rgba(32, 157, 215, 0.08);
+  background: rgba(32, 157, 215, 0.07);
   color: var(--blue);
   transform: none;
   box-shadow: none;
@@ -657,10 +773,7 @@ h1, h2, h3, h4 {
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   background: rgba(3, 33, 71, 0.4);
   display: flex;
   align-items: center;
@@ -668,40 +781,42 @@ h1, h2, h3, h4 {
   z-index: 1000;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  padding: 1rem;
 }
 
 .add-card-modal {
   position: relative;
   background: white;
-  padding: 2rem;
+  padding: 1.75rem;
   border-radius: var(--border-radius);
-  width: 90%;
-  max-width: 440px;
+  width: 100%;
+  max-width: 420px;
   border: none;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.1rem;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
   color: var(--navy);
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 0.7rem;
+  padding: 0.65rem 0.75rem;
   border: 1px solid #d9e2ec;
   border-radius: 6px;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: border-color 0.2s;
+  color: var(--navy);
 }
 
 .form-group input:focus,
@@ -715,5 +830,65 @@ h1, h2, h3, h4 {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+/* ── Responsive ──────────────────────────────── */
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 100;
+  }
+
+  .app-layout.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .app-layout.sidebar-open .sidebar-backdrop {
+    display: block;
+  }
+
+  .kanban-column {
+    width: 240px;
+    min-width: 240px;
+    max-height: calc(100vh - 100px);
+  }
+
+  .column-dragging {
+    width: 240px;
+  }
+
+  .add-column-btn {
+    width: 220px;
+  }
+
+  .board-container {
+    padding: 0.875rem 0.875rem 0.75rem;
+  }
+
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .hamburger-btn {
+    display: none;
+  }
+
+  .sidebar-backdrop {
+    display: none !important;
+  }
 }

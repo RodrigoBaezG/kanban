@@ -1,5 +1,10 @@
 export type Id = string | number;
 
+export type User = {
+  name: string;
+  password: string;
+};
+
 export type Project = {
   id: Id;
   name: string;
