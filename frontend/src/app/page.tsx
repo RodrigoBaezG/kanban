@@ -17,6 +17,8 @@ export default function Home() {
   const [authError, setAuthError] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [isAddingProject, setIsAddingProject] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
   const [newProjectName, setNewProjectName] = useState('');
 
   useEffect(() => {
@@ -104,6 +106,15 @@ export default function Home() {
     const updated = projects.filter(p => p.id !== id);
     setProjects(updated);
     saveProjects(currentUser, updated);
+  };
+
+  const renameProject = (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || !currentUser) { setRenamingId(null); return; }
+    const updated = projects.map(p => p.id === id ? { ...p, name: trimmed } : p);
+    setProjects(updated);
+    saveProjects(currentUser, updated);
+    setRenamingId(null);
   };
 
   // ── Auth screen ────────────────────────────────────────────────────────────
@@ -203,27 +214,63 @@ export default function Home() {
             const cardCount = getCards(currentUser, project.id as string).length;
             return (
               <div key={project.id as string} className="project-card-wrapper">
-                <a
-                  href={`/board?projectId=${project.id}`}
-                  className="project-card"
-                >
-                  <div className="project-card-bar" style={{ background: project.color }} />
-                  <div className="project-card-body">
-                    <h2 className="project-card-name">{project.name}</h2>
-                    <p className="project-card-stats">
-                      {colCount} column{colCount !== 1 ? 's' : ''} · {cardCount} card{cardCount !== 1 ? 's' : ''}
-                    </p>
+                {renamingId === project.id ? (
+                  // ── Rename mode ──────────────────────────────────────
+                  <div className="project-card project-card-renaming">
+                    <div className="project-card-bar" style={{ background: project.color }} />
+                    <div className="project-card-body">
+                      <form onSubmit={e => { e.preventDefault(); renameProject(project.id as string, renameValue); }}>
+                        <input
+                          autoFocus
+                          className="project-rename-input"
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          onBlur={() => renameProject(project.id as string, renameValue)}
+                          onKeyDown={e => {
+                            if (e.key === 'Escape') setRenamingId(null);
+                          }}
+                        />
+                      </form>
+                      <p className="project-card-stats">
+                        {colCount} column{colCount !== 1 ? 's' : ''} · {cardCount} card{cardCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="project-card-footer">
+                      <span style={{ fontSize: '0.78rem', color: 'var(--gray)' }}>Enter to save · Esc to cancel</span>
+                    </div>
                   </div>
-                  <div className="project-card-footer">
-                    <span className="project-card-open">Open Board →</span>
+                ) : (
+                  // ── Normal mode ───────────────────────────────────────
+                  <a href={`/board?projectId=${project.id}`} className="project-card">
+                    <div className="project-card-bar" style={{ background: project.color }} />
+                    <div className="project-card-body">
+                      <h2 className="project-card-name">{project.name}</h2>
+                      <p className="project-card-stats">
+                        {colCount} column{colCount !== 1 ? 's' : ''} · {cardCount} card{cardCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="project-card-footer">
+                      <span className="project-card-open">Open Board →</span>
+                    </div>
+                  </a>
+                )}
+
+                {/* Edit / Delete buttons (visible on hover) */}
+                {renamingId !== project.id && (
+                  <div className="project-card-actions">
+                    <button
+                      className="project-card-action-btn"
+                      onClick={() => { setRenamingId(project.id as string); setRenameValue(project.name); }}
+                      title="Rename project"
+                    >✎</button>
+                    {projects.length > 1 && (
+                      <button
+                        className="project-card-action-btn project-card-action-delete"
+                        onClick={() => deleteProject(project.id as string)}
+                        title="Delete project"
+                      >×</button>
+                    )}
                   </div>
-                </a>
-                {projects.length > 1 && (
-                  <button
-                    className="project-card-delete"
-                    onClick={() => deleteProject(project.id as string)}
-                    title="Delete project"
-                  >×</button>
                 )}
               </div>
             );
