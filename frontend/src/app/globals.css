@@ -549,6 +549,58 @@ h1, h2, h3, h4 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.header-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.header-logout-btn {
+  background: transparent;
+  color: var(--gray);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  box-shadow: none;
+  border: 1px solid rgba(3, 33, 71, 0.12);
+}
+
+.header-logout-btn:hover {
+  background: rgba(3, 33, 71, 0.05);
+  color: var(--navy);
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .header-user-name { display: none; }
 }
 
 .header-sep {

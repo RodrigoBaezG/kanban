@@ -35,6 +35,16 @@ export default function BoardPage() {
         <span className="header-sep" />
         <span className="project-dot-lg" style={{ background: selectedProject.color }} />
         <h1 className="board-page-title">{selectedProject.name}</h1>
+        <div className="header-user">
+          <span className="header-user-avatar">{currentUser[0].toUpperCase()}</span>
+          <span className="header-user-name">{currentUser}</span>
+          <button className="header-logout-btn" onClick={() => {
+            localStorage.removeItem('kanban_user');
+            window.location.replace('/');
+          }}>
+            Log out
+          </button>
+        </div>
       </header>
       <Board
         key={projectId}
