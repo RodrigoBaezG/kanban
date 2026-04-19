@@ -518,11 +518,12 @@ h1, h2, h3, h4 {
 
 .board-container {
   flex: 1;
-  display: flex;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 1.25rem 1.25rem 1rem;
-  align-items: flex-start;
+  /* No display:flex here — board handles its own flex layout.
+     Without an explicit width, a flex container tries to size to
+     its content and overflow-x:auto never triggers. */
 }
 
 .board {
