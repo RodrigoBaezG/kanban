@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /c/Users/Kbaez/Desktop/Proyectos/kanban/frontend/src/lib)",
+      "Bash(mkdir -p /c/Users/Kbaez/Desktop/Proyectos/kanban/frontend/src/app/board)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

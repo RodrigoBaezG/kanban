@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-// ── Seed data used in board tests ───────────────────────────────────────────
 const TEST_USER = 'TestUser';
 const TEST_PROJECT_ID = 'test_p1';
 
@@ -24,29 +23,47 @@ const BOARD_SEED: Record<string, string> = {
   ]),
 };
 
-// ── Board tests (pre-seeded user, skips auth screen) ────────────────────────
+// ── Projects page ──────────────────────────────────────────────────────────
+test.describe('Projects Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((seed) => {
+      for (const [key, value] of Object.entries(seed)) localStorage.setItem(key, value);
+    }, BOARD_SEED);
+  });
+
+  test('should show project cards when logged in', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('.projects-grid')).toBeVisible();
+    await expect(page.locator('.project-card').filter({ hasText: 'My Project' })).toBeVisible();
+    await expect(page.locator('.project-card-open')).toBeVisible();
+  });
+
+  test('should navigate to board when a project card is clicked', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('.project-card').filter({ hasText: 'My Project' }).click();
+    await expect(page.locator('.kanban-column')).toHaveCount(5);
+    await expect(page.locator('.app-title')).toContainText('My Project');
+  });
+});
+
+// ── Kanban Board ───────────────────────────────────────────────────────────
 test.describe('Kanban Board', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript((seed) => {
-      for (const [key, value] of Object.entries(seed)) {
-        localStorage.setItem(key, value);
-      }
+      for (const [key, value] of Object.entries(seed)) localStorage.setItem(key, value);
     }, BOARD_SEED);
   });
 
   test('should render board with project name and 5 columns', async ({ page }) => {
-    await page.goto('/');
-
+    await page.goto(`/board?projectId=${TEST_PROJECT_ID}`);
     await expect(page.locator('.app-title')).toContainText('My Project');
-
     for (const title of ['To Do', 'In Progress', 'Review', 'Testing', 'Done']) {
       await expect(page.locator(`.column-title:has-text("${title}")`)).toBeVisible();
     }
   });
 
   test('should add a new card', async ({ page }) => {
-    await page.goto('/');
-
+    await page.goto(`/board?projectId=${TEST_PROJECT_ID}`);
     await expect(page.locator('.kanban-card')).toHaveCount(4);
 
     const todoColumn = page.locator('.kanban-column').filter({ hasText: 'To Do' }).first();
@@ -63,8 +80,7 @@ test.describe('Kanban Board', () => {
   });
 
   test('should delete an existing card', async ({ page }) => {
-    await page.goto('/');
-
+    await page.goto(`/board?projectId=${TEST_PROJECT_ID}`);
     await expect(page.locator('.kanban-card')).toHaveCount(4);
 
     const cardToDelete = page.locator('.kanban-card').filter({ hasText: 'Database Migration' }).first();
@@ -74,71 +90,69 @@ test.describe('Kanban Board', () => {
     await expect(page.locator('.kanban-card')).toHaveCount(3);
     await expect(page.locator('.kanban-card').filter({ hasText: 'Database Migration' })).not.toBeVisible();
   });
+
+  test('should show back button linking to projects page', async ({ page }) => {
+    await page.goto(`/board?projectId=${TEST_PROJECT_ID}`);
+    await expect(page.locator('.back-btn')).toBeVisible();
+    await page.locator('.back-btn').click();
+    await expect(page.locator('.projects-grid')).toBeVisible();
+  });
 });
 
-// ── Auth tests (clean localStorage) ─────────────────────────────────────────
+// ── Auth ───────────────────────────────────────────────────────────────────
 test.describe('Auth', () => {
   test('should show login screen when not authenticated', async ({ page }) => {
     await page.goto('/');
-
     await expect(page.locator('.auth-card')).toBeVisible();
     await expect(page.locator('.auth-tab:has-text("Log In")')).toBeVisible();
     await expect(page.locator('.auth-tab:has-text("Sign Up")')).toBeVisible();
     await expect(page.locator('button:has-text("Continue as Demo")')).toBeVisible();
   });
 
-  test('should log in as demo user', async ({ page }) => {
-    await page.goto('/');
-    await page.click('button:has-text("Continue as Demo")');
-
-    await expect(page.locator('.sidebar')).toBeVisible();
-    await expect(page.locator('.user-name')).toContainText('Demo');
-    await expect(page.locator('.kanban-column')).toHaveCount(5);
+  test('should redirect unauthenticated board access to home', async ({ page }) => {
+    await page.goto('/board?projectId=anything');
+    await expect(page.locator('.auth-card')).toBeVisible();
   });
 
-  test('should sign up and access the board', async ({ page }) => {
+  test('should log in as demo user and show projects', async ({ page }) => {
     await page.goto('/');
+    await page.click('button:has-text("Continue as Demo")');
+    await expect(page.locator('.user-name')).toContainText('Demo');
+    await expect(page.locator('.projects-grid')).toBeVisible();
+    await expect(page.locator('.project-card').filter({ hasText: 'My Project' })).toBeVisible();
+  });
 
+  test('should sign up and see projects page', async ({ page }) => {
+    await page.goto('/');
     await page.click('.auth-tab:has-text("Sign Up")');
     await page.fill('input[name="name"]', 'NewUser');
     await page.fill('input[name="password"]', 'pass123');
     await page.fill('input[name="confirm"]', 'pass123');
     await page.click('button[type="submit"]');
-
-    await expect(page.locator('.sidebar')).toBeVisible();
     await expect(page.locator('.user-name')).toContainText('NewUser');
+    await expect(page.locator('.projects-grid')).toBeVisible();
   });
 
   test('should reject login with wrong password', async ({ page }) => {
-    // Seed a user to test against
     await page.addInitScript(() => {
-      localStorage.setItem('kanban_users', JSON.stringify([
-        { name: 'Alice', password: 'secret' },
-      ]));
+      localStorage.setItem('kanban_users', JSON.stringify([{ name: 'Alice', password: 'secret' }]));
     });
-
     await page.goto('/');
     await page.fill('input[name="name"]', 'Alice');
-    await page.fill('input[name="password"]', 'wrongpassword');
+    await page.fill('input[name="password"]', 'wrong');
     await page.click('button[type="submit"]');
-
     await expect(page.locator('.auth-error')).toBeVisible();
-    await expect(page.locator('.auth-card')).toBeVisible();
   });
 
   test('should log in with correct credentials', async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem('kanban_users', JSON.stringify([
-        { name: 'Alice', password: 'secret' },
-      ]));
+      localStorage.setItem('kanban_users', JSON.stringify([{ name: 'Alice', password: 'secret' }]));
     });
-
     await page.goto('/');
     await page.fill('input[name="name"]', 'Alice');
     await page.fill('input[name="password"]', 'secret');
     await page.click('button[type="submit"]');
-
-    await expect(page.locator('.sidebar')).toBeVisible();
     await expect(page.locator('.user-name')).toContainText('Alice');
+    await expect(page.locator('.projects-grid')).toBeVisible();
   });
 });

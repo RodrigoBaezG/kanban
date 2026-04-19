@@ -7,7 +7,6 @@ interface Props {
   userName: string;
   projects: Project[];
   selectedProjectId: string | null;
-  onSelectProject: (id: string) => void;
   onAddProject: (name: string) => void;
   onDeleteProject: (id: string) => void;
   onLogout: () => void;
@@ -17,7 +16,6 @@ export default function Sidebar({
   userName,
   projects,
   selectedProjectId,
-  onSelectProject,
   onAddProject,
   onDeleteProject,
   onLogout,
@@ -38,7 +36,7 @@ export default function Sidebar({
     <aside className="sidebar">
       <div className="sidebar-brand">
         <span className="brand-icon">⊞</span>
-        <span className="brand-name">Kanban</span>
+        <a href="/" className="brand-name">Kanban</a>
       </div>
 
       <div className="sidebar-user">
@@ -46,6 +44,11 @@ export default function Sidebar({
         <span className="user-name">{userName}</span>
         <button className="logout-btn" onClick={onLogout} title="Log out">↩</button>
       </div>
+
+      <a href="/" className={`sidebar-home-link${selectedProjectId === null ? ' active' : ''}`}>
+        <span>⊟</span>
+        <span>All Projects</span>
+      </a>
 
       <div className="sidebar-label">Projects</div>
 
@@ -55,13 +58,13 @@ export default function Sidebar({
             key={project.id as string}
             className={`project-item${selectedProjectId === project.id ? ' active' : ''}`}
           >
-            <button
+            <a
+              href={`/board?projectId=${project.id}`}
               className="project-item-btn"
-              onClick={() => onSelectProject(project.id as string)}
             >
               <span className="project-dot" style={{ background: project.color }} />
               <span className="project-name">{project.name}</span>
-            </button>
+            </a>
             {projects.length > 1 && (
               <button
                 className="project-delete-btn"
